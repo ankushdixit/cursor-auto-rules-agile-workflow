@@ -20,7 +20,7 @@ Cursor frequently updates its rule handling. For optimal performance with rule f
 ### Unix/MacOS
 ```bash
 # Clone this repository
-git clone https://github.com/bmadcode/cursor-rules-fork.git
+git clone https://github.com/ankushdixit/cursor-auto-rules-agile-workflow.git cursor-rules-fork
 cd cursor-rules-fork
 
 # Deploy rules to your project
@@ -30,7 +30,7 @@ cd cursor-rules-fork
 ### Windows
 ```batch
 # Clone this repository
-git clone https://github.com/bmadcode/cursor-rules-fork.git
+git clone https://github.com/ankushdixit/cursor-auto-rules-agile-workflow.git cursor-rules-fork
 cd cursor-rules-fork
 
 # Deploy rules to your project
@@ -41,9 +41,10 @@ apply-rules.bat C:\path\to\your\project
 
 The script will:
 1. Create the target directory if it doesn't exist
-2. Copy all rule files (*.mdc) to your project's `.cursor/rules/` directory
-3. Copy the docs directory and its contents if it exists
-4. Set up appropriate .gitignore entries for private rules
+2. Create the `.ai/docs` folder for AI-specific documentation
+3. Copy all rule files (*.mdc) to your project's `.cursor/rules/` directory
+4. Copy the docs directory and its contents if it exists
+5. Set up appropriate .gitignore entries for private rules and AI documentation
 
 ## Rule Categories
 

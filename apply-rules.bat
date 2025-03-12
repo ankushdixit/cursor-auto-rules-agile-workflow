@@ -21,9 +21,12 @@ if not exist "%TARGET_DIR%\" (
     ) > "%TARGET_DIR%\README.md"
 )
 
-REM Create the .cursor\rules directory
+REM Create required directories
 if not exist "%TARGET_DIR%\.cursor\rules\" (
     mkdir "%TARGET_DIR%\.cursor\rules"
+)
+if not exist "%TARGET_DIR%\.ai\docs\" (
+    mkdir "%TARGET_DIR%\.ai\docs"
 )
 
 REM Copy the rule files (without overwriting existing ones)
@@ -43,26 +46,29 @@ if exist "docs\" (
     xcopy "docs\*.*" "%TARGET_DIR%\docs\" /E /I /Y >nul
 )
 
-REM Update .gitignore for private rules
+REM Update .gitignore for private rules and AI docs
 if exist "%TARGET_DIR%\.gitignore" (
     findstr /L /C:".cursor/rules/_*.mdc" "%TARGET_DIR%\.gitignore" >nul
     if errorlevel 1 (
         (
             echo.
-            echo # Private individual user cursor rules
+            echo # Private individual user cursor rules and AI docs
             echo .cursor/rules/_*.mdc
+            echo .ai/docs/_*.md
         ) >> "%TARGET_DIR%\.gitignore"
     )
 ) else (
     (
-        echo # Private individual user cursor rules
+        echo # Private individual user cursor rules and AI docs
         echo .cursor/rules/_*.mdc
+        echo .ai/docs/_*.md
     ) > "%TARGET_DIR%\.gitignore"
 )
 
 echo.
 echo Deployment Complete!
 echo Core rules: %TARGET_DIR%\.cursor\rules\
+echo AI docs: %TARGET_DIR%\.ai\docs\
 if exist "docs\" (
     echo Documentation: %TARGET_DIR%\docs\
 )

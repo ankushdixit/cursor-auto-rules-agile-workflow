@@ -22,8 +22,9 @@ This project has been configured with Cursor rules for enhanced AI assistance.
 EOL
 fi
 
-# Create .cursor/rules directory if it doesn't exist
+# Create required directories if they don't exist
 mkdir -p "$TARGET_DIR/.cursor/rules"
+mkdir -p "$TARGET_DIR/.ai/docs"
 
 # Copy core rule files
 echo "📦 Copying cursor rules files..."
@@ -39,14 +40,15 @@ fi
 # Update .gitignore if needed
 if [ -f "$TARGET_DIR/.gitignore" ]; then
     if ! grep -q "\.cursor/rules/_\*\.mdc" "$TARGET_DIR/.gitignore"; then
-        echo -e "\n# Private individual user cursor rules\n.cursor/rules/_*.mdc" >> "$TARGET_DIR/.gitignore"
+        echo -e "\n# Private individual user cursor rules and AI docs\n.cursor/rules/_*.mdc\n.ai/docs/_*.md" >> "$TARGET_DIR/.gitignore"
     fi
 else
-    echo -e "# Private individual user cursor rules\n.cursor/rules/_*.mdc" > "$TARGET_DIR/.gitignore"
+    echo -e "# Private individual user cursor rules and AI docs\n.cursor/rules/_*.mdc\n.ai/docs/_*.md" > "$TARGET_DIR/.gitignore"
 fi
 
 echo "✨ Deployment Complete!"
 echo "📁 Core rules: $TARGET_DIR/.cursor/rules/"
+echo "🤖 AI docs: $TARGET_DIR/.ai/docs/"
 if [ -d "docs" ]; then
     echo "📚 Documentation: $TARGET_DIR/docs/"
 fi
