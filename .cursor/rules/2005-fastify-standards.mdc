@@ -1,0 +1,122 @@
+---
+description: ENFORCE Fastify API endpoint structure with Zod validation and consistent error handling patterns
+globs: **/{routes,api,controllers}/**/*.{ts,js}
+alwaysApply: true
+---
+
+# Fastify API Structure Standards
+
+## Context
+- When creating new API endpoints
+- When implementing request validation
+- When handling API errors
+- When organizing route structures
+
+## Requirements
+- Use Zod for request validation
+- Implement consistent error handling
+- Follow RESTful route organization
+- Maintain proper TypeScript integration
+
+## Examples
+<example>
+✅ Route Implementation:
+```ts
+// routes/users/index.ts
+import { z } from 'zod';
+import { FastifyPluginAsync } from 'fastify';
+
+// Schema definitions
+const userSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  age: z.number().min(18).optional(),
+});
+
+const querySchema = z.object({
+  limit: z.number().min(1).max(100).default(10),
+  offset: z.number().min(0).default(0),
+});
+
+// Route plugin
+const userRoutes: FastifyPluginAsync = async (fastify) => {
+  // Error handler for this route context
+  fastify.setErrorHandler((error, request, reply) => {
+    if (error instanceof z.ZodError) {
+      return reply.status(400).send({
+        error: 'Validation Error',
+        details: error.issues,
+      });
+    }
+    
+    request.log.error(error);
+    return reply.status(500).send({ error: 'Internal Server Error' });
+  });
+
+  // GET /users
+  fastify.get('/', {
+    schema: {
+      querystring: querySchema,
+    },
+    handler: async (request) => {
+      const { limit, offset } = request.query;
+      return getUsersList({ limit, offset });
+    },
+  });
+
+  // POST /users
+  fastify.post('/', {
+    schema: {
+      body: userSchema,
+    },
+    handler: async (request, reply) => {
+      const userData = request.body;
+      const user = await createUser(userData);
+      return reply.status(201).send(user);
+    },
+  });
+};
+
+export default userRoutes;
+```
+</example>
+
+<example type="invalid">
+❌ Poor Route Implementation:
+```ts
+// Avoid missing validation
+fastify.post('/users', async (req) => {
+  const user = await createUser(req.body); // No validation
+});
+
+// Avoid inconsistent error handling
+fastify.get('/products', async (req, reply) => {
+  try {
+    return await getProducts();
+  } catch (err) {
+    console.error(err); // Poor error handling
+    reply.status(500).send({ error: err.message });
+  }
+});
+
+// Avoid mixing concerns
+fastify.put('/users/:id', async (req) => {
+  // Business logic mixed with route handler
+  const user = await db.users.findOne(req.params.id);
+  user.name = req.body.name;
+  return await user.save();
+});
+```
+</example>
+
+## Critical Rules
+  - Use Zod schemas for request/response validation
+  - Implement route-specific error handlers
+  - Group related routes using Fastify plugins
+  - Use proper HTTP status codes consistently
+  - Implement request logging and error tracking
+  - Separate business logic from route handlers
+  - Use TypeScript for type safety
+  - Follow RESTful naming conventions
+  - Document API endpoints with OpenAPI/Swagger
+  - Implement proper security headers and CORS 

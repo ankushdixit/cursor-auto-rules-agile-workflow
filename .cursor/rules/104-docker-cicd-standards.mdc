@@ -1,0 +1,200 @@
+---
+description: ENFORCE Docker containerization and Google Cloud CI/CD patterns for consistent deployment workflows
+globs: {Dockerfile,docker-compose.yml,cloudbuild.yaml,*.dockerfile}
+alwaysApply: true
+---
+
+# Docker and CI/CD Standards
+
+## Context
+- When containerizing applications
+- When setting up CI/CD pipelines
+- When configuring deployment workflows
+- When managing environment variables in containers
+
+## Requirements
+- Follow Docker best practices
+- Implement proper multi-stage builds
+- Configure efficient CI/CD pipelines
+- Maintain secure secrets management
+
+## Examples
+<example>
+✅ Docker and CI/CD Implementation:
+```dockerfile
+# Dockerfile - Multi-stage build for Next.js application
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml ./
+# Install pnpm
+RUN corepack enable pnpm
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy dependencies and source code
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Set build argument for environment
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Build the application
+RUN corepack enable pnpm
+RUN pnpm build
+
+# Stage 3: Runner
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+# Set to production environment
+ENV NODE_ENV=production
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+
+# Copy built assets from builder stage
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Set port and start command
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+```yaml
+# cloudbuild.yaml - Google Cloud Build configuration
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/nextjs-app:$COMMIT_SHA', 
+           '--build-arg', 'NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}', '.']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/nextjs-app:$COMMIT_SHA']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'nextjs-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/nextjs-app:$COMMIT_SHA'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+substitutions:
+  _REGION: us-central1
+  _NEXT_PUBLIC_API_URL: https://api.example.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+```
+
+```yaml
+# docker-compose.yml - Local development
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://api:8000
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+```
+</example>
+
+<example type="invalid">
+❌ Poor Docker and CI/CD Implementation:
+```dockerfile
+# Avoid single-stage builds for production
+FROM node:20
+WORKDIR /app
+COPY . .
+RUN npm install
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+
+# Avoid running as root
+# Missing NODE_ENV
+# Installing dev dependencies in production
+```
+
+```yaml
+# Avoid hardcoded secrets in CI/CD config
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/project/app:latest', 
+           '--build-arg', 'API_KEY=1234567890abcdef', '.']
+
+# Missing version tagging
+# No environment separation
+# Hardcoded credentials
+```
+
+```yaml
+# Avoid incomplete docker-compose configuration
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    # Missing volumes for development
+    # Missing environment variables
+    # No service dependencies
+```
+</example>
+
+## Critical Rules
+  - Use multi-stage builds to minimize image size
+  - Implement proper layer caching for faster builds
+  - Run containers as non-root users
+  - Use environment variables for configuration
+  - Avoid hardcoded secrets in Docker images
+  - Implement proper health checks
+  - Tag images with commit SHA for traceability
+  - Separate development and production Dockerfiles
+  - Use Cloud Build substitutions for environment-specific values
+  - Implement proper service dependencies in docker-compose
+  - Store secrets in Secret Manager, not in build configs
+  - Use volumes for development to enable hot reloading 

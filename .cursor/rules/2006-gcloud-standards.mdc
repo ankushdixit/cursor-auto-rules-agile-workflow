@@ -1,0 +1,112 @@
+---
+description: ENFORCE Google Cloud services integration patterns for secure and efficient cloud resource management
+globs: **/{cloud,firebase,gcp}/**/*.{ts,js}
+alwaysApply: true
+---
+
+# Google Cloud Integration Standards
+
+## Context
+- When integrating Google Cloud services
+- When configuring Cloud Run deployments
+- When implementing Firebase features
+- When managing secrets and configurations
+
+## Requirements
+- Follow secure authentication patterns
+- Implement proper error handling
+- Use environment-based configurations
+- Maintain service isolation
+
+## Examples
+<example>
+✅ Cloud Integration:
+```ts
+// config/firebase.ts
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
+// Environment-based configuration
+const firebaseConfig = {
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  // Other config values...
+};
+
+// Singleton pattern for Firebase initialization
+export const initFirebase = () => {
+  if (!getApps().length) {
+    const app = initializeApp(firebaseConfig);
+    return app;
+  }
+  return getApps()[0];
+};
+
+// Cloud Run service with Secret Manager
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+
+const secretManager = new SecretManagerServiceClient();
+
+async function getSecret(name: string): Promise<string> {
+  try {
+    const [version] = await secretManager.accessSecretVersion({
+      name: `projects/${process.env.PROJECT_ID}/secrets/${name}/versions/latest`,
+    });
+    return version.payload?.data?.toString() ?? '';
+  } catch (error) {
+    console.error(`Failed to access secret ${name}:`, error);
+    throw new Error('Failed to access secret');
+  }
+}
+
+// Firebase Admin initialization with service isolation
+import * as admin from 'firebase-admin';
+
+export const initAdminApp = async () => {
+  if (!admin.apps.length) {
+    const serviceAccount = await getSecret('firebase-admin-key');
+    admin.initializeApp({
+      credential: admin.credential.cert(JSON.parse(serviceAccount)),
+      databaseURL: process.env.FIREBASE_DATABASE_URL,
+    });
+  }
+  return admin;
+};
+```
+</example>
+
+<example type="invalid">
+❌ Poor Cloud Integration:
+```ts
+// Avoid hardcoded credentials
+const firebaseConfig = {
+  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXX",
+  projectId: "my-project",
+  // Other hardcoded values...
+};
+
+// Avoid mixing environments
+const db = process.env.NODE_ENV === 'production'
+  ? getProductionDB()
+  : getDevDB();
+
+// Avoid insecure secret handling
+const apiKey = fs.readFileSync('./secrets/api-key.txt');
+
+// Avoid global service initialization
+const globalFirebase = initializeApp(config);
+```
+</example>
+
+## Critical Rules
+  - Use environment variables for configuration
+  - Implement proper secret management with Secret Manager
+  - Follow principle of least privilege for service accounts
+  - Use separate service accounts per environment
+  - Implement proper error handling for cloud services
+  - Configure proper CORS and security headers
+  - Use Firebase Admin SDK server-side only
+  - Implement proper logging and monitoring
+  - Follow Cloud Run best practices for containerization
+  - Maintain service isolation between environments 

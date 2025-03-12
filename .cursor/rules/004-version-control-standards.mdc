@@ -1,0 +1,186 @@
+---
+description: ENFORCE version control standards for consistent commit messages, branch naming, and PR workflow
+globs: .git/**/*
+alwaysApply: true
+---
+
+# Version Control Standards
+
+## Context
+- When making commits to the repository
+- When creating and managing branches
+- When submitting and reviewing pull requests
+- When managing releases and versioning
+
+## Requirements
+- Follow conventional commit message format
+- Use consistent branch naming conventions
+- Implement proper PR review process
+- Maintain clean git history
+
+## Examples
+<example>
+✅ Good Version Control Practices:
+```bash
+# Commit Messages
+feat(auth): implement OAuth2 social login
+fix(ui): resolve button alignment in mobile view
+docs(api): update authentication endpoints
+test(core): add unit tests for user service
+refactor(db): optimize query performance
+chore(deps): update dependencies
+
+# Branch Names
+feature/auth-social-login
+bugfix/mobile-button-alignment
+hotfix/security-vulnerability
+release/v1.2.0
+docs/api-authentication
+
+# Pull Request Title and Description
+Title: feat(auth): implement OAuth2 social login
+
+Description:
+## Changes
+- Add OAuth2 provider integration
+- Implement social login flow
+- Add user profile mapping
+
+## Testing
+- Added integration tests
+- Manually tested with Google and GitHub providers
+
+## Screenshots
+[If applicable]
+
+## Related Issues
+Closes #123
+```
+
+# Git Workflow
+```bash
+# Feature Development
+git checkout -b feature/new-feature main
+git add .
+git commit -m "feat(scope): description"
+git push origin feature/new-feature
+
+# Keeping Feature Branch Updated
+git checkout feature/new-feature
+git fetch origin
+git rebase origin/main
+
+# Code Review Updates
+git add .
+git commit -m "fix(scope): address review feedback"
+git push origin feature/new-feature
+
+# After PR Approval
+git checkout main
+git pull origin main
+git merge --squash feature/new-feature
+git commit -m "feat(scope): comprehensive commit message"
+```
+</example>
+
+<example type="invalid">
+❌ Poor Version Control Practices:
+```bash
+# Bad Commit Messages
+git commit -m "fixed stuff"
+git commit -m "WIP"
+git commit -m "."
+git commit -m "Updated files"
+
+# Bad Branch Names
+my-branch
+fix-stuff
+temp
+john-changes
+
+# Poor PR Description
+Title: Updates
+
+Description:
+Made some changes to the auth system
+```
+
+# Bad Git Workflow
+```bash
+# Avoid direct commits to main
+git checkout main
+git commit -m "quick fix"
+
+# Avoid merge commits in feature branches
+git merge main  # Instead of rebase
+
+# Avoid force pushing to shared branches
+git push -f origin main
+
+# Avoid large, unfocused commits
+git add .
+git commit -m "multiple unrelated changes"
+```
+</example>
+
+## Critical Rules
+  - Use conventional commits (type(scope): description)
+  - Keep commits focused and atomic
+  - Never commit sensitive information
+  - Branch names should be descriptive and follow convention
+  - Rebase feature branches on main
+  - Squash commits before merging to main
+  - Write detailed PR descriptions
+  - Include tests and documentation in PRs
+  - Review PRs thoroughly before merging
+  - Maintain a clean, linear git history
+
+## Commit Types
+  - feat: New features
+  - fix: Bug fixes
+  - docs: Documentation changes
+  - style: Code style changes (formatting, etc.)
+  - refactor: Code refactoring
+  - test: Adding or modifying tests
+  - chore: Maintenance tasks
+  - perf: Performance improvements
+  - ci: CI/CD changes
+  - revert: Reverting changes
+
+## Branch Types
+  - feature/: New features
+  - bugfix/: Bug fixes
+  - hotfix/: Urgent fixes for production
+  - release/: Release preparation
+  - docs/: Documentation updates
+  - chore/: Maintenance tasks
+
+## PR Template
+```markdown
+## Description
+[Detailed description of changes]
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manually tested
+
+## Screenshots
+[If applicable]
+
+## Related Issues
+[Link to related issues]
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Self-review completed
+- [ ] Documentation updated
+- [ ] Tests added/updated
+- [ ] PR title follows conventional commits
+``` 

@@ -1,0 +1,77 @@
+---
+description: ENFORCE TypeScript best practices for type safety, React components, and maintainable code
+globs: **/*.{ts,tsx}
+alwaysApply: true
+---
+
+# TypeScript Best Practices
+
+## Context
+- When writing TypeScript code in any project
+- When defining types, interfaces, and React component props
+- When implementing type-safe functions and APIs
+
+## Requirements
+- Use strict TypeScript configuration
+- Prefer explicit typing over implicit
+- Follow consistent type definition patterns
+- Implement proper error handling with types
+
+## Examples
+<example>
+✅ Type Definitions:
+```ts
+// Use interfaces for object definitions
+interface User {
+  id: string;
+  name: string;
+  age?: number;
+}
+
+// Use type for unions, intersections, and mapped types
+type Status = 'pending' | 'success' | 'error';
+type Nullable<T> = T | null;
+
+// React component with proper typing
+interface ButtonProps {
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+}
+
+const Button = ({ onClick, children, variant = 'primary' }: ButtonProps) => {
+  return <button onClick={onClick}>{children}</button>;
+};
+```
+</example>
+
+<example type="invalid">
+❌ Poor Type Usage:
+```ts
+// Avoid any
+const handleData = (data: any) => {};
+
+// Don't use object
+interface Config {
+  settings: object;
+}
+
+// Avoid implicit typing
+const numbers = [];
+
+// Don't use Function type
+type Handler = Function;
+```
+</example>
+
+## Critical Rules
+  - Enable strict mode in tsconfig.json
+  - Use interfaces for object shapes, types for unions/utility types
+  - Never use 'any' without explicit justification
+  - Always type React component props and state
+  - Use type predicates for type narrowing
+  - Leverage TypeScript utility types (Pick, Omit, etc.)
+  - Maintain consistent naming: IInterface, TType pattern
+  - Document complex types with JSDoc comments
+  - Use readonly for immutable properties
+  - Prefer union types over enums 

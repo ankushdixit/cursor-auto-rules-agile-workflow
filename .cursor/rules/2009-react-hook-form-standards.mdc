@@ -1,0 +1,191 @@
+---
+description: ENFORCE React Hook Form + Zod validation patterns for type-safe form handling and consistent error management
+globs: **/{forms,components}/**/*.{ts,tsx}
+alwaysApply: true
+---
+
+# React Hook Form + Zod Standards
+
+## Context
+- When implementing form validation
+- When handling form state and submissions
+- When managing form errors
+- When implementing client-side validation
+
+## Requirements
+- Use Zod schemas for validation
+- Implement proper error handling
+- Maintain type safety throughout forms
+- Follow consistent form organization patterns
+
+## Examples
+<example>
+✅ Form Implementation:
+```tsx
+// forms/LoginForm.tsx
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+// Define validation schema with Zod
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  rememberMe: z.boolean().optional(),
+});
+
+// Infer types from the schema
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+export function LoginForm() {
+  // Initialize form with validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    },
+  });
+
+  // Form submission handler
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      await loginUser(data);
+      reset();
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="form-field">
+        <label htmlFor="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          {...register('email')}
+          className={errors.email ? 'input-error' : ''}
+        />
+        {errors.email && (
+          <p className="error-message">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          {...register('password')}
+          className={errors.password ? 'input-error' : ''}
+        />
+        {errors.password && (
+          <p className="error-message">{errors.password.message}</p>
+        )}
+      </div>
+
+      <div className="form-field-checkbox">
+        <input
+          id="rememberMe"
+          type="checkbox"
+          {...register('rememberMe')}
+        />
+        <label htmlFor="rememberMe">Remember me</label>
+      </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn-primary w-full"
+      >
+        {isSubmitting ? 'Logging in...' : 'Log in'}
+      </button>
+    </form>
+  );
+}
+
+// Reusable form hook example
+export function useLoginForm() {
+  return useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    },
+  });
+}
+```
+</example>
+
+<example type="invalid">
+❌ Poor Form Implementation:
+```tsx
+// Avoid using form without validation
+function BadLoginForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // Missing validation
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Direct submission without validation
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text" // Should be type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+
+// Avoid mixing React Hook Form with uncontrolled inputs
+function MixedForm() {
+  const { register, handleSubmit } = useForm();
+  const [checkbox, setCheckbox] = useState(false);
+
+  // Mixing paradigms
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('email')} />
+      {/* Mixing controlled and uncontrolled */}
+      <input
+        type="checkbox"
+        checked={checkbox}
+        onChange={(e) => setCheckbox(e.target.checked)}
+      />
+    </form>
+  );
+}
+```
+</example>
+
+## Critical Rules
+  - Define Zod schemas outside components for reusability
+  - Infer TypeScript types from Zod schemas using z.infer<typeof schema>
+  - Use zodResolver from @hookform/resolvers/zod
+  - Handle form errors at field level with proper error messages
+  - Implement loading states during form submission
+  - Reset form after successful submission when appropriate
+  - Create reusable form hooks for complex forms
+  - Use proper input types (email, password, etc.)
+  - Organize form code into logical sections: schema, hooks, components
+  - Maintain consistent error handling patterns across forms 

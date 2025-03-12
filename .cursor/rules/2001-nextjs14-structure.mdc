@@ -1,0 +1,93 @@
+---
+description: ENFORCE Next.js 14 project structure standards for consistent app organization and maintainability
+globs: app/**/*
+alwaysApply: true
+---
+
+# Next.js 14 Project Structure Standards
+
+## Context
+- When creating or modifying Next.js 14 applications
+- When organizing components, routes, and application logic
+- When implementing new features or refactoring existing code
+
+## Requirements
+- Follow App Router directory structure and conventions
+- Maintain clear separation of concerns
+- Implement proper component organization
+- Use consistent file naming and exports
+
+## Directory Structure
+
+```
+app/
+├── (auth)/             # Auth-related grouped routes
+├── (dashboard)/        # Dashboard grouped routes
+├── api/                # API route handlers
+├── components/         # Shared components
+│   ├── ui/            # Reusable UI components
+│   ├── forms/         # Form-related components
+│   └── layouts/       # Layout components
+├── hooks/             # Custom React hooks
+├── lib/               # Utility functions and shared logic
+├── styles/            # Global styles and CSS modules
+├── types/             # TypeScript type definitions
+└── utils/             # Helper functions and constants
+```
+
+## Examples
+<example>
+✅ Component Organization:
+```tsx
+// app/components/ui/Button.tsx
+export default function Button({ children, ...props }) {
+  return <button {...props}>{children}</button>;
+}
+
+// app/components/forms/LoginForm.tsx
+import { Button } from '@/components/ui';
+```
+
+✅ Page Structure:
+```tsx
+// app/(auth)/login/page.tsx
+import { LoginForm } from '@/components/forms';
+import { AuthLayout } from '@/components/layouts';
+
+export default function LoginPage() {
+  return (
+    <AuthLayout>
+      <LoginForm />
+    </AuthLayout>
+  );
+}
+```
+</example>
+
+<example type="invalid">
+❌ Incorrect Structure:
+```tsx
+// Mixing concerns in page components
+app/login/page.tsx with embedded styles and business logic
+
+// Inconsistent component organization
+app/shared/components/Button.tsx
+app/components/buttons/Button.tsx
+
+// Poor file naming
+app/utils/func.ts
+app/components/comp1.tsx
+```
+</example>
+
+## Critical Rules
+  - Use the App Router directory structure with route groups and segments
+  - Keep components modular and focused on a single responsibility
+  - Place shared components in app/components with proper categorization
+  - Use barrel exports (index.ts) for component directories
+  - Implement server and client components appropriately with proper naming ('use client')
+  - Follow TypeScript naming conventions and maintain type safety
+  - Keep styling consistent using CSS Modules or Tailwind CSS
+  - Use proper error handling with error.tsx and loading.tsx files
+  - Maintain clear separation between server and client code
+  - Document complex components and utilities with JSDoc comments 

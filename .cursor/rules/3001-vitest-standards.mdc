@@ -1,0 +1,168 @@
+---
+description: ENFORCE Vitest testing standards for component, API, and integration testing with proper mocking strategies
+globs: **/*.{test,spec}.{ts,tsx}
+alwaysApply: true
+---
+
+# Vitest Testing Standards
+
+## Context
+- When writing unit tests for components
+- When testing API endpoints and services
+- When implementing integration tests
+- When setting up test mocks and fixtures
+
+## Requirements
+- Follow consistent test organization
+- Implement proper mocking strategies
+- Use appropriate testing utilities
+- Maintain test isolation and cleanup
+
+## Examples
+<example>
+✅ Test Implementation:
+```ts
+// components/Button.test.tsx
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { Button } from './Button';
+
+describe('Button Component', () => {
+  beforeEach(() => {
+    // Reset any side effects between tests
+    vi.clearAllMocks();
+  });
+
+  it('renders with correct text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  it('handles click events', async () => {
+    const onClickMock = vi.fn();
+    render(<Button onClick={onClickMock}>Click me</Button>);
+    
+    await fireEvent.click(screen.getByText('Click me'));
+    expect(onClickMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies variant styles correctly', () => {
+    render(<Button variant="primary">Primary</Button>);
+    const button = screen.getByText('Primary');
+    expect(button).toHaveClass('btn-primary');
+  });
+});
+
+// services/userService.test.ts
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { createUser, getUser } from './userService';
+import { prisma } from '@/lib/prisma';
+
+describe('User Service', () => {
+  // Setup test database
+  beforeAll(async () => {
+    await prisma.$connect();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it('creates a user successfully', async () => {
+    const userData = {
+      email: 'test@example.com',
+      name: 'Test User',
+    };
+
+    const user = await createUser(userData);
+    expect(user).toMatchObject(userData);
+    expect(user.id).toBeDefined();
+  });
+
+  it('throws error for duplicate email', async () => {
+    await expect(
+      createUser({ email: 'test@example.com', name: 'Another User' })
+    ).rejects.toThrow();
+  });
+});
+
+// hooks/useAuth.test.tsx
+import { renderHook, act } from '@testing-library/react';
+import { useAuth } from './useAuth';
+import { AuthProvider } from '@/contexts/AuthContext';
+
+describe('useAuth Hook', () => {
+  // Mock Firebase Auth
+  vi.mock('firebase/auth', () => ({
+    getAuth: vi.fn(),
+    signInWithEmailAndPassword: vi.fn(),
+  }));
+
+  it('provides authentication state', () => {
+    const wrapper = ({ children }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    expect(result.current.user).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('handles login successfully', async () => {
+    const { result } = renderHook(() => useAuth());
+    
+    await act(async () => {
+      await result.current.login('user@example.com', 'password');
+    });
+
+    expect(result.current.user).toBeDefined();
+  });
+});
+```
+</example>
+
+<example type="invalid">
+❌ Poor Test Implementation:
+```ts
+// Avoid testing implementation details
+test('internal state updates', () => {
+  const button = new Button();
+  expect(button.internalState).toBe('initial');
+});
+
+// Avoid non-isolated tests
+test('user creation', async () => {
+  // Using real database without cleanup
+  const user = await db.users.create({});
+});
+
+// Avoid testing multiple concerns
+test('button functionality', () => {
+  const button = render(<Button />);
+  // Testing too many things in one test
+  expect(button).toBeVisible();
+  expect(button).toBeEnabled();
+  expect(button).toHaveClass('primary');
+  fireEvent.click(button);
+  expect(something).toHaveChanged();
+});
+
+// Avoid hardcoded timeouts
+test('async operation', async () => {
+  await new Promise(r => setTimeout(r, 1000));
+  expect(something).toBeDone();
+});
+```
+</example>
+
+## Critical Rules
+  - Write focused, single-responsibility tests
+  - Use descriptive test and describe block names
+  - Implement proper cleanup in beforeEach/afterEach
+  - Mock external dependencies consistently
+  - Use testing-library best practices for components
+  - Maintain test isolation with proper setup/teardown
+  - Write tests that focus on behavior, not implementation
+  - Use appropriate assertions and matchers
+  - Implement proper error case testing
+  - Follow the Arrange-Act-Assert pattern 

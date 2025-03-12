@@ -1,0 +1,154 @@
+---
+description: ENFORCE Shadcn/UI component integration patterns for consistent component usage and customization
+globs: **/{components,ui}/**/*.{ts,tsx}
+alwaysApply: true
+---
+
+# Shadcn/UI Component Standards
+
+## Context
+- When using Shadcn/UI components
+- When customizing component styles
+- When creating component variants
+- When implementing responsive UI designs
+
+## Requirements
+- Follow Shadcn/UI installation and usage patterns
+- Implement consistent component customization
+- Maintain proper component organization
+- Use proper component composition patterns
+
+## Examples
+<example>
+✅ Component Usage:
+```tsx
+// components/ui/button.tsx - Shadcn Button component
+import { forwardRef } from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
+
+// Define button variants using class-variance-authority
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'underline-offset-4 hover:underline text-primary',
+      },
+      size: {
+        default: 'h-10 py-2 px-4',
+        sm: 'h-9 px-3 rounded-md',
+        lg: 'h-11 px-8 rounded-md',
+        icon: 'h-10 w-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = 'Button';
+
+export { Button, buttonVariants };
+
+// Using the component - In a page or another component
+import { Button } from '@/components/ui/button';
+
+export function LoginButton() {
+  return (
+    <Button 
+      variant="primary" 
+      size="lg" 
+      onClick={() => console.log('Login clicked')}
+    >
+      Login
+    </Button>
+  );
+}
+```
+</example>
+
+<example type="invalid">
+❌ Poor Component Usage:
+```tsx
+// Avoid direct styling without using the variant system
+function BadButton({ children }) {
+  return (
+    <button 
+      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    >
+      {children}
+    </button>
+  );
+}
+
+// Avoid reinventing existing Shadcn components
+function CustomButton({ children, primary }) {
+  return (
+    <button
+      className={`rounded-md ${
+        primary 
+          ? 'bg-primary text-white' 
+          : 'bg-gray-200 text-gray-800'
+      } py-2 px-4`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Avoid inconsistent prop interfaces
+function InconsistentButton({ children, isSecondary, isSmall }) {
+  return (
+    <button
+      className={`
+        ${isSecondary ? 'bg-gray-500' : 'bg-blue-500'}
+        ${isSmall ? 'text-sm p-1' : 'text-base p-2'}
+      `}
+    >
+      {children}
+    </button>
+  );
+}
+```
+</example>
+
+## Critical Rules
+  - Use the Shadcn/UI CLI for component installation
+  - Store components in a dedicated ui directory
+  - Customize components through the variant system using cva
+  - Use cn utility for merging Tailwind classes
+  - Implement proper TypeScript interfaces for component props
+  - Maintain accessibility through proper ARIA attributes
+  - Use Radix UI primitives for complex interactive components
+  - Implement proper component composition patterns
+  - Forward refs for all interactive components
+  - Add proper displayName to all components
+  - Use asChild pattern for slot-based composition
+  - Maintain consistent theme variables across components 

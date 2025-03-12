@@ -1,0 +1,132 @@
+---
+description: ENFORCE browser-tools-mcp usage patterns for effective debugging, testing, and performance optimization
+globs: **/*.{test,spec,e2e}.{ts,tsx}
+alwaysApply: true
+---
+
+# Browser Tools MCP Standards
+
+## Context
+- When debugging browser-based issues
+- When performing performance audits
+- When testing browser-specific behaviors and accessibility
+- When automating browser interactions
+
+## Requirements
+- Use appropriate browser tools for specific tasks
+- Implement consistent logging patterns
+- Follow proper error tracking strategies
+- Maintain automated audit workflows
+- Complement unit tests with browser-specific testing
+
+## Examples
+<example>
+✅ Browser Tools Usage:
+```ts
+// tests/e2e/checkout.test.ts
+import { describe, it, expect, beforeEach } from 'vitest';
+
+describe('Checkout Flow', () => {
+  beforeEach(async () => {
+    // Clear browser logs before each test
+    await mcp__wipeLogs();
+  });
+
+  it('handles payment processing correctly', async () => {
+    // Monitor network activity
+    const networkLogs = await mcp__getNetworkLogs();
+    expect(networkLogs).not.toContain('payment-error');
+
+    // Check for console errors
+    const consoleErrors = await mcp__getConsoleErrors();
+    expect(consoleErrors).toHaveLength(0);
+  });
+
+  it('maintains accessibility standards', async () => {
+    // Run accessibility audit
+    const audit = await mcp__runAccessibilityAudit();
+    expect(audit.violations).toHaveLength(0);
+  });
+});
+
+// utils/debug.ts
+export async function debugPaymentFlow() {
+  // Enable debugger mode
+  await mcp__runDebuggerMode();
+  
+  // Take screenshot for documentation
+  await mcp__takeScreenshot();
+  
+  // Check selected element
+  const element = await mcp__getSelectedElement();
+  console.log('Selected element:', element);
+}
+
+// utils/performance.ts
+export async function auditPerformance() {
+  // Run comprehensive audits
+  await mcp__runAuditMode();
+  
+  const [
+    performanceAudit,
+    seoAudit,
+    bestPracticesAudit,
+    nextJSAudit
+  ] = await Promise.all([
+    mcp__runPerformanceAudit(),
+    mcp__runSEOAudit(),
+    mcp__runBestPracticesAudit(),
+    mcp__runNextJSAudit()
+  ]);
+
+  return {
+    performance: performanceAudit,
+    seo: seoAudit,
+    bestPractices: bestPracticesAudit,
+    nextJS: nextJSAudit
+  };
+}
+```
+</example>
+
+<example type="invalid">
+❌ Poor Browser Tools Usage:
+```ts
+// Avoid mixing concerns
+test('payment flow', async () => {
+  mcp__runDebuggerMode(); // Debugging in test
+  mcp__runAuditMode();    // Auditing in test
+  // Test logic mixed with debugging
+});
+
+// Avoid unnecessary logging
+function processPayment() {
+  mcp__getConsoleLogs(); // Logging without purpose
+  // Process payment logic
+}
+
+// Avoid missing error handling
+async function checkNetwork() {
+  const logs = await mcp__getNetworkLogs();
+  // No error handling or log analysis
+}
+
+// Avoid running heavy audits in tests
+test('component render', async () => {
+  await mcp__runPerformanceAudit(); // Unnecessary for unit test
+  // Component test logic
+});
+```
+</example>
+
+## Critical Rules
+  - Use browser tools appropriately for their intended purpose
+  - Clear logs before starting new test scenarios
+  - Implement proper error handling for browser tool calls
+  - Separate browser-specific testing from unit/integration tests
+  - Run performance audits in dedicated workflows
+  - Use screenshots and element selection strategically
+  - Monitor console and network errors consistently
+  - Maintain accessibility compliance through regular audits
+  - Follow Next.js best practices in audit workflows
+  - Document browser tool usage patterns

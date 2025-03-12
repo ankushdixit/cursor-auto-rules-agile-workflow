@@ -1,0 +1,113 @@
+---
+description: ENFORCE Zustand store patterns for type-safe state management and consistent React integration
+globs: **/{store,stores}/**/*.{ts,tsx}
+alwaysApply: true
+---
+
+# Zustand Store Implementation Standards
+
+## Context
+- When creating new Zustand stores
+- When implementing state management logic
+- When connecting stores to React components
+- When handling async operations in stores
+
+## Requirements
+- Use TypeScript interfaces for store state and actions
+- Implement stores with proper type safety
+- Follow consistent store organization patterns
+- Handle side effects appropriately
+
+## Examples
+<example>
+✅ Store Implementation:
+```ts
+// stores/userStore.ts
+interface UserState {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  // Actions
+  login: (credentials: Credentials) => Promise<void>;
+  logout: () => void;
+  updateProfile: (data: Partial<User>) => void;
+}
+
+export const useUserStore = create<UserState>((set, get) => ({
+  // State
+  user: null,
+  isLoading: false,
+  error: null,
+
+  // Actions
+  login: async (credentials) => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await loginApi(credentials);
+      set({ user, isLoading: false });
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  logout: () => set({ user: null }),
+
+  updateProfile: (data) => {
+    const { user } = get();
+    set({ user: { ...user, ...data } });
+  },
+}));
+
+// Component Usage
+const UserProfile = () => {
+  const { user, updateProfile } = useUserStore(
+    (state) => ({
+      user: state.user,
+      updateProfile: state.updateProfile,
+    })
+  );
+};
+```
+</example>
+
+<example type="invalid">
+❌ Poor Store Implementation:
+```ts
+// Avoid untyped stores
+const useStore = create((set) => ({
+  data: null,
+  setData: (data) => set({ data })
+}));
+
+// Avoid mixing concerns in a single store
+const useGlobalStore = create((set) => ({
+  user: null,
+  products: [],
+  cart: [],
+  theme: 'light',
+  // Too many responsibilities
+}));
+
+// Avoid direct state mutations
+const useBadStore = create((set, get) => ({
+  items: [],
+  addItem: (item) => {
+    const items = get().items;
+    items.push(item); // Mutating state directly
+    set({ items });
+  }
+}));
+```
+</example>
+
+## Critical Rules
+  - Define explicit TypeScript interfaces for store state and actions
+  - Split stores by domain/feature (user, cart, settings, etc.)
+  - Use immutable state updates
+  - Implement proper error handling in async actions
+  - Use selective store subscriptions in components
+  - Keep stores minimal and focused
+  - Handle loading and error states consistently
+  - Use middleware when needed (persist, devtools)
+  - Document complex store interactions
+  - Test store actions and selectors separately 

@@ -1,0 +1,140 @@
+---
+description: ENFORCE Firestore data modeling patterns for efficient querying, scalable collections, and optimized document structure
+globs: **/{models,firestore,db}/**/*.{ts,js}
+alwaysApply: true
+---
+
+# Firestore Data Modeling Standards
+
+## Context
+- When designing Firestore collections and documents
+- When implementing data access patterns
+- When optimizing query performance
+- When structuring relationships between documents
+
+## Requirements
+- Follow document-oriented design principles
+- Implement efficient querying patterns
+- Structure collections for scalability
+- Maintain data consistency and integrity
+
+## Examples
+<example>
+✅ Data Modeling:
+```ts
+// models/user.ts
+interface User {
+  id: string;
+  email: string;
+  profile: {
+    name: string;
+    avatar: string;
+    preferences: Record<string, boolean>;
+  };
+  // Denormalized data for efficient querying
+  lastOrderDate: Timestamp;
+  orderCount: number;
+}
+
+// Subcollection pattern for one-to-many relationships
+interface Order {
+  id: string;
+  userId: string;
+  items: {
+    productId: string;
+    quantity: number;
+    price: number;
+  }[];
+  total: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: Timestamp;
+}
+
+// Data access with type safety
+export class UserRepository {
+  private collection = collection(db, 'users');
+
+  async getUser(id: string): Promise<User | null> {
+    const doc = await getDoc(doc(this.collection, id));
+    return doc.exists() ? (doc.data() as User) : null;
+  }
+
+  // Optimized query with compound index
+  async getUsersByOrderCount(limit: number): Promise<User[]> {
+    const snapshot = await getDocs(
+      query(
+        this.collection,
+        orderBy('orderCount', 'desc'),
+        limit(limit)
+      )
+    );
+    return snapshot.docs.map(doc => doc.data() as User);
+  }
+
+  // Atomic updates for consistency
+  async incrementOrderCount(userId: string): Promise<void> {
+    const userRef = doc(this.collection, userId);
+    await runTransaction(db, async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      if (!userDoc.exists()) throw new Error('User not found');
+      
+      transaction.update(userRef, {
+        orderCount: increment(1),
+        lastOrderDate: serverTimestamp(),
+      });
+    });
+  }
+}
+```
+</example>
+
+<example type="invalid">
+❌ Poor Data Modeling:
+```ts
+// Avoid deeply nested data
+interface BadUser {
+  orders: {  // Nested array instead of subcollection
+    items: {
+      product: {  // Nested product data instead of reference
+        name: string;
+        description: string;
+        // Too much nested data
+      }[];
+    }[];
+  };
+}
+
+// Avoid querying without indexes
+const badQuery = await getDocs(
+  query(
+    collection(db, 'users'),
+    where('age', '>', 18),
+    where('city', '==', 'NYC'),
+    orderBy('name')  // Missing compound index
+  )
+);
+
+// Avoid large document updates
+await updateDoc(userRef, {
+  entireObjectUpdate: hugeObject, // Risk of exceeding document size
+});
+
+// Avoid inefficient queries
+const inefficientQuery = await getDocs(
+  collection(db, 'users')  // Fetching entire collection
+);
+users.docs.filter(doc => doc.data().someField === value);
+```
+</example>
+
+## Critical Rules
+  - Design collections around query patterns
+  - Use subcollections for one-to-many relationships
+  - Keep document size under 1MB
+  - Create compound indexes for complex queries
+  - Denormalize data strategically for read optimization
+  - Use batch operations for bulk updates
+  - Implement transactions for data consistency
+  - Structure documents for atomic updates
+  - Cache frequently accessed data
+  - Use references instead of deep nesting 

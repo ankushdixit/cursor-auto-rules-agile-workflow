@@ -1,0 +1,173 @@
+---
+description: ENFORCE Prisma schema design patterns for type-safe database modeling and efficient querying
+globs: **/{prisma,models,schema}/**/*.{prisma,ts}
+alwaysApply: true
+---
+
+# Prisma Schema Design Standards
+
+## Context
+- When designing database schemas with Prisma
+- When modeling relationships between entities
+- When implementing database queries
+- When integrating with TypeScript
+
+## Requirements
+- Follow consistent naming conventions
+- Implement proper relationships and indexes
+- Use appropriate field types and modifiers
+- Maintain schema documentation
+
+## Examples
+<example>
+✅ Schema Design:
+```prisma
+// schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  // Enable full type safety
+  previewFeatures = ["fullTextSearch", "extendedWhereUnique"]
+}
+
+/// User model with relationships and indexes
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(USER)
+  profile   Profile?
+  posts     Post[]
+  comments  Comment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Indexes for common queries
+  @@index([email])
+  @@index([role])
+}
+
+/// User profile with one-to-one relationship
+model Profile {
+  id       String  @id @default(cuid())
+  bio      String?
+  avatar   String?
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+/// Post model with relationships and full-text search
+model Post {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  published Boolean   @default(false)
+  author    User      @relation(fields: [authorId], references: [id])
+  authorId  String
+  comments  Comment[]
+  tags      Tag[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Enable full-text search on title and content
+  @@fulltext([title, content])
+  @@index([authorId])
+  @@index([published])
+}
+
+// TypeScript integration
+// services/user.service.ts
+import { PrismaClient, Prisma } from '@prisma/client';
+
+export class UserService {
+  constructor(private prisma: PrismaClient) {}
+
+  // Type-safe query with includes
+  async getUserWithProfile(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        posts: {
+          where: { published: true },
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+  }
+
+  // Type-safe create with relations
+  async createUserWithProfile(
+    data: Prisma.UserCreateInput & {
+      profile: Prisma.ProfileCreateInput
+    }
+  ) {
+    return this.prisma.user.create({
+      data: {
+        ...data,
+        profile: {
+          create: data.profile,
+        },
+      },
+      include: { profile: true },
+    });
+  }
+}
+```
+</example>
+
+<example type="invalid">
+❌ Poor Schema Design:
+```prisma
+// Avoid inconsistent naming
+model user_data {
+  user_id Int @id
+  UserName String
+  user_email String
+  // Mixed naming conventions
+}
+
+// Avoid missing relationships
+model Post {
+  id Int @id
+  userId Int // Missing proper relation
+  content String
+}
+
+// Avoid inefficient indexing
+model Product {
+  id Int @id
+  name String
+  description String
+  price Float
+  // Missing indexes for common queries
+  @@index([name, description, price]) // Too broad index
+}
+
+// Avoid poor TypeScript integration
+const createUser = async (data: any) => { // No type safety
+  return prisma.user.create({ data });
+};
+```
+</example>
+
+## Critical Rules
+  - Use consistent naming conventions (camelCase for fields, PascalCase for models)
+  - Define explicit relationships between models
+  - Create targeted indexes for common queries
+  - Implement proper cascade deletes
+  - Use appropriate field types and constraints
+  - Enable TypeScript strict mode
+  - Document models and fields with comments
+  - Use transactions for related operations
+  - Implement proper error handling
+  - Follow schema migration best practices 

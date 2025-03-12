@@ -1,0 +1,207 @@
+---
+description: ENFORCE development tooling standards for consistent code quality, formatting, and environment configuration
+globs: {.eslintrc.*,.prettierrc.*,.env*,*.config.{js,ts}}
+alwaysApply: true
+---
+
+# Development Tooling Standards
+
+## Context
+- When configuring code quality tools
+- When setting up environment variables
+- When managing development workflows
+- When implementing pre-commit hooks
+
+## Requirements
+- Implement consistent ESLint and Prettier configuration
+- Configure type-safe environment variables
+- Set up efficient Git hooks for code quality
+- Maintain consistent package management
+
+## Examples
+<example>
+✅ Development Tools Configuration:
+```js
+// .eslintrc.js
+module.exports = {
+  root: true,
+  extends: [
+    'next/core-web-vitals',
+    'plugin:@typescript-eslint/recommended',
+    'prettier', // Integrates Prettier
+  ],
+  plugins: ['@typescript-eslint', 'import'],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: './tsconfig.json',
+    ecmaVersion: 2021,
+    sourceType: 'module',
+    ecmaFeatures: {
+      jsx: true,
+    },
+  },
+  rules: {
+    // Import sorting
+    'import/order': [
+      'error',
+      {
+        groups: [
+          'builtin',
+          'external',
+          'internal',
+          'parent',
+          'sibling',
+          'index',
+        ],
+        'newlines-between': 'always',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+      },
+    ],
+    // React Rules
+    'react/prop-types': 'off',
+    'react/react-in-jsx-scope': 'off',
+    // TypeScript Rules
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-explicit-any': 'error',
+    // Next.js Rules
+    '@next/next/no-html-link-for-pages': 'error',
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
+    'import/resolver': {
+      typescript: {},
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      },
+    },
+  },
+};
+```
+
+```json
+// .prettierrc
+{
+  "semi": true,
+  "tabWidth": 2,
+  "printWidth": 80,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "arrowParens": "avoid"
+}
+```
+
+```ts
+// env.ts - Type-safe environment variables
+import { z } from 'zod';
+
+const envSchema = z.object({
+  // Server environment variables
+  NODE_ENV: z.enum(['development', 'production', 'test']),
+  DATABASE_URL: z.string().url(),
+  PORT: z.string().transform(val => parseInt(val, 10)),
+  
+  // Client environment variables
+  NEXT_PUBLIC_API_URL: z.string().url(),
+  NEXT_PUBLIC_GA_ID: z.string().optional(),
+});
+
+// Parse and validate environment variables
+export const env = envSchema.parse(process.env);
+
+// Type inference for TypeScript
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv extends z.infer<typeof envSchema> {}
+  }
+}
+```
+
+```json
+// .husky/pre-commit
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+pnpm lint-staged
+
+// package.json (lint-staged configuration)
+{
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
+  }
+}
+```
+</example>
+
+<example type="invalid">
+❌ Poor Development Tools Configuration:
+```js
+// Avoid minimal or missing ESLint configuration
+module.exports = {
+  extends: [
+    'next'
+  ],
+  // Missing TypeScript rules
+  // Missing import organization
+  // Missing proper parserOptions
+};
+```
+
+```json
+// Avoid inconsistent or conflicting Prettier configuration
+{
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "all"
+}
+// Conflicts with team standards
+```
+
+```js
+// Avoid untyped environment variables
+const API_URL = process.env.API_URL;
+const PORT = process.env.PORT;
+
+// No validation
+// No error handling for missing variables
+// No type safety
+```
+
+```json
+// Avoid missing or incomplete Git hooks
+{
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write ."
+    // Missing pre-commit hooks
+    // Manual process for code quality
+  }
+}
+```
+</example>
+
+## Critical Rules
+  - Configure ESLint with TypeScript and React/Next.js rules
+  - Integrate Prettier with ESLint for consistent formatting
+  - Implement husky and lint-staged for pre-commit validation
+  - Use Zod to validate environment variables at runtime
+  - Maintain consistent code style across the codebase
+  - Configure import sorting for organized imports
+  - Enforce strict TypeScript rules to prevent common errors
+  - Use pnpm as the primary package manager
+  - Maintain separate environment files per environment
+  - Document required environment variables with examples
+  - Keep consistent configuration across all projects
+  - Automate code quality checks in the development workflow 

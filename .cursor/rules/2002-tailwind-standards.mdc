@@ -1,0 +1,86 @@
+---
+description: ENFORCE Tailwind CSS class organization and responsive design patterns for consistent styling
+globs: **/*.{tsx,jsx}
+alwaysApply: true
+---
+
+# Tailwind CSS Formatting Standards
+
+## Context
+- When writing component styles using Tailwind CSS
+- When implementing responsive designs
+- When organizing utility classes
+
+## Requirements
+- Follow consistent class ordering pattern
+- Use proper responsive breakpoint prefixes
+- Implement component-specific styles efficiently
+- Maintain readable class structure
+
+## Examples
+<example>
+✅ Class Organization:
+```tsx
+// Layout > Spacing > Typography > Visual > Interactive
+const Card = () => (
+  <div className="
+    flex flex-col                    /* Layout */
+    p-4 my-2 gap-3                  /* Spacing */
+    text-lg font-semibold           /* Typography */
+    bg-white rounded-lg shadow-md    /* Visual */
+    hover:shadow-lg transition-all   /* Interactive */
+  ">
+    {children}
+  </div>
+);
+
+// Responsive Design
+const Header = () => (
+  <nav className="
+    flex flex-col md:flex-row        /* Mobile-first */
+    items-center justify-between     /* Layout */
+    p-3 md:p-4 lg:p-6               /* Responsive spacing */
+    bg-gray-800 md:bg-gray-900      /* Responsive colors */
+  ">
+    {children}
+  </nav>
+);
+```
+</example>
+
+<example type="invalid">
+❌ Poor Class Organization:
+```tsx
+// Avoid mixing concerns and random ordering
+const BadCard = () => (
+  <div className="
+    text-lg hover:shadow-lg p-4 flex
+    bg-white my-2 font-semibold flex-col
+  ">
+    {children}
+  </div>
+);
+
+// Avoid desktop-first approach
+const BadHeader = () => (
+  <nav className="
+    lg:p-6 flex-row bg-gray-900
+    sm:flex-col xs:p-3 items-center
+  ">
+    {children}
+  </nav>
+);
+```
+</example>
+
+## Critical Rules
+  - Follow mobile-first responsive design
+  - Group related utility classes together
+  - Use consistent class ordering: Layout > Spacing > Typography > Visual > Interactive
+  - Maintain proper breakpoint order: sm > md > lg > xl > 2xl
+  - Extract common patterns into @apply directives
+  - Use meaningful component-specific classes
+  - Comment complex utility combinations
+  - Keep class strings readable with proper formatting
+  - Use custom theme values over arbitrary values
+  - Implement dark mode with dark: prefix consistently 
