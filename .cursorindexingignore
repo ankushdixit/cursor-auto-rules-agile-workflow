@@ -1,2 +1,2 @@
-/xnotes
-.cursor/templates/*.md
+# Cursor indexing ignore file
+# Add directories or files that should be excluded from indexing
